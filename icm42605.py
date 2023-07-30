@@ -23,11 +23,33 @@ class ICM42605:
         self.addr = address
         self.operating = False
         self.x = 0
+        self.x_bias = 0
         
     def config_gyro(self, value="b'\x48'"):
         if self.operating:
             self.disable()
         self.i2c.writeto_mem(self.addr, GYRO_CONFIG, value)
+        
+    def get_bias(self):
+        print("Keep the board flat and still while the gyroscope is calibrated.")
+            
+        precision = 100 # change this number to change precision of calibration. higher number will take longer 
+        
+        # X
+        x_result = []
+        for i in range(precision):
+            data = i2c.readfrom_mem(self.addr, 0x1F, 2)
+            # Assuming data[0] is the upper byte and data[1] is the lower byte
+            accel_value = (data[0] << 8) | data[1]
+            # Convert to signed integer
+            if accel_value & 0x8000:
+                accel_value -= 0x10000
+            x_result.append(accel_value * (72/32768)) # I found this value through trial and error, trying to minimize error
+            time.sleep(0.01)
+        
+        x_err = sum(x_result) / len(x_result)
+        self.x_bias = x_err
+        
         
     def enable(self, accel=True, gyro=True, temp=True):
         if self.operating:
@@ -71,10 +93,10 @@ class ICM42605:
             data = int.from_bytes(self.i2c.readfrom_mem(self.addr, FIFO_DATA, 1), 'big')
             if ( data & 0xE0 == 0x20): # Contains data, not accel, yes gyro
                 gyr = self.i2c.readfrom_mem(self.addr, FIFO_DATA, 8)
-                gyro_value = (gyr[1] << 8) | gyr[1]
+                gyro_value = (gyr[1] << 8) | gyr[2]
                 if gyro_value & 0x8000:
                     gyro_value -= 0x10000
-                self.x += gyro_value * (16/32768)
+                self.x += gyro_value * (16/32768) - self.x_bias
                 i += 8
                 
     
@@ -94,8 +116,9 @@ if __name__ == '__main__':
     gyr = ICM42605(i2c, 0x68)
     gyr.config_gyro()
     gyr.enable()
+    gyr.get_bias()
     gyr.start_gyros()
     while True:
         print(gyr.x)
-        time.sleep_ms(1000)
+        time.sleep_ms(50)
         
