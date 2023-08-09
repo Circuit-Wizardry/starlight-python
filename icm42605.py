@@ -38,14 +38,7 @@ class ICM42605:
         # X
         x_result = []
         for i in range(precision):
-            data = i2c.readfrom_mem(self.addr, 0x1F, 2)
-            # Assuming data[0] is the upper byte and data[1] is the lower byte
-            accel_value = (data[0] << 8) | data[1]
-            # Convert to signed integer
-            if accel_value & 0x8000:
-                accel_value -= 0x10000
-            x_result.append(accel_value * (72/32768)) # I found this value through trial and error, trying to minimize error
-            time.sleep(0.01)
+            x_result.append(self.get_gyro_x())
         
         x_err = sum(x_result) / len(x_result)
         self.x_bias = x_err
@@ -80,7 +73,7 @@ class ICM42605:
         if gyro_value & 0x8000:
             gyro_value -= 0x10000
     
-        return gyro_value * (16/32768)
+        return gyro_value * (500.0 / 32768.0 / 128)
     
     def fifo_count(self):
         count = self.i2c.readfrom_mem(self.addr, FIFO_COUNTH, 2)
@@ -96,7 +89,7 @@ class ICM42605:
                 gyro_value = (gyr[1] << 8) | gyr[2]
                 if gyro_value & 0x8000:
                     gyro_value -= 0x10000
-                self.x += gyro_value * (16/32768) - self.x_bias
+                self.x += gyro_value * (500.0 / 32768.0 / 128) - self.x_bias
                 i += 8
                 
     
