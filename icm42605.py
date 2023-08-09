@@ -83,8 +83,8 @@ class ICM42605:
             return False
         
         # Start FIFO
-        self.i2c.writeto_mem(self.addr, FIFO_CONFIG1, b'\x02')
-        self.i2c.writeto_mem(self.addr, FIFO_CONFIG, b'\x40')
+        #self.i2c.writeto_mem(self.addr, FIFO_CONFIG1, b'\x02')
+        #self.i2c.writeto_mem(self.addr, FIFO_CONFIG, b'\x40')
         
         val = 0x00
         if accel:
