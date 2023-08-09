@@ -3,6 +3,7 @@ import machine
 # Registers
 DEVICE_CONFIG = 0x11
 FIFO_CONFIG   = 0x16
+TEMP_DATA1    = 0x1d
 ACCEL_DATA_X1 = 0x1f
 ACCEL_DATA_Y1 = 0x21
 ACCEL_DATA_Z1 = 0x23
@@ -258,7 +259,8 @@ class BMP388:
             pressure = (po1 + po2 + pd4)/100 #PRESSURE IN hPa
             
             return(temperature, pressure)
-        
+
+          
         
 if __name__ == '__main__':
     import machine
@@ -267,13 +269,12 @@ if __name__ == '__main__':
     gyr.config_gyro()
     gyr.enable()
     gyr.get_bias()
+    print("gx_bias: "+str(gyr.gx_bias)+" gy_bias: "+str(gyr.gy_bias)+" gz_bias: "+str(gyr.gz_bias))
     gyr.start_gyros()
-    
-    temp = BMP388(i2c, 0x76)
-    temp.enable_temp_and_pressure()
-    temp.calibrate()
-    
+    count = 0
     while True:
-        print(temp.getPressure())
-        time.sleep_ms(50)
+        if count % 50 == 0:
+            print("x: " + str(gyr.gx) + " y: " + str(gyr.gy) + " z: " + str(gyr.gz))
+        time.sleep_ms(20)
+        count +=1
         
