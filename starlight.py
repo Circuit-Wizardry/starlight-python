@@ -33,6 +33,9 @@ class ICM42605:
         self.gx = 0
         self.gy = 0
         self.gz = 0
+        self.ax = 0.0
+        self.ay = 0.0
+        self.az = 0.0
         self.gRes = 2000/32768
         self.gOdr = 1000
         self.aRes = 16/32768
@@ -119,24 +122,24 @@ class ICM42605:
     def get_accel_and_gyro_data(self):
         data = self.i2c.readfrom_mem(self.addr, ACCEL_DATA_X1, 12)
         val = (data[0] << 8) | data[1]
-        ax = ((val - 0x10000) if (val & 0x8000) else val) * self.aRes - self.ax_bias
+        self.ax = ((val - 0x10000) if (val & 0x8000) else val) * self.aRes - self.ax_bias
         val = (data[2] << 8) | data[3]
-        ay = ((val - 0x10000) if (val & 0x8000) else val) * self.aRes - self.ay_bias
+        self.ay = ((val - 0x10000) if (val & 0x8000) else val) * self.aRes - self.ay_bias
         val = (data[4] << 8) | data[5]
-        az = ((val - 0x10000) if (val & 0x8000) else val) * self.aRes - self.az_bias
+        self.az = ((val - 0x10000) if (val & 0x8000) else val) * self.aRes - self.az_bias
         val = (data[6] << 8) | data[7]
         gx = ((val - 0x10000) if (val & 0x8000) else val) * self.gRes - self.gx_bias
         val = (data[8] << 8) | data[9]
         gy = ((val - 0x10000) if (val & 0x8000) else val) * self.gRes - self.gy_bias
         val = (data[10] << 8) | data[11]
         gz = ((val - 0x10000) if (val & 0x8000) else val) * self.gRes - self.gz_bias
-        return (ax, ay, az, gx, gy, gz)
+        return (gx, gy, gz)
     
     def updateData(self, time):
         data = self.get_accel_and_gyro_data()
-        self.gx += data[3] * time/1000
-        self.gy += data[4] * time/1000
-        self.gz += data[5] * time/1000
+        self.gx += data[0] * time/1000
+        self.gy += data[1] * time/1000
+        self.gz += data[2] * time/1000
     
     def fifo_count(self):
         count = self.i2c.readfrom_mem(self.addr, FIFO_COUNTH, 2)
@@ -211,10 +214,10 @@ class BMP388:
         return int.from_bytes(data, 'big')
     
     def getTemperature(self):
-        return self.read_temp_and_pressure()[0];
+        return self.read_temp_and_pressure()[0]
 
     def getPressure(self):
-        return self.read_temp_and_pressure()[1];
+        return self.read_temp_and_pressure()[1]
     
     def read_temp_and_pressure(self):
         # See if readings are ready
