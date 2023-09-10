@@ -133,13 +133,13 @@ class ICM42605:
         gy = ((val - 0x10000) if (val & 0x8000) else val) * self.gRes - self.gy_bias
         val = (data[10] << 8) | data[11]
         gz = ((val - 0x10000) if (val & 0x8000) else val) * self.gRes - self.gz_bias
-        return (gx, gy, gz)
+        return (self.ax, self.ay, self.az, gx, gy, gz)
     
     def updateData(self, time):
         data = self.get_accel_and_gyro_data()
-        self.gx += data[0] * time/1000
-        self.gy += data[1] * time/1000
-        self.gz += data[2] * time/1000
+        self.gx += data[3] * time/1000
+        self.gy += data[4] * time/1000
+        self.gz += data[5] * time/1000
     
     def fifo_count(self):
         count = self.i2c.readfrom_mem(self.addr, FIFO_COUNTH, 2)
@@ -263,6 +263,8 @@ class BMP388:
             
             return(temperature, pressure)
         
+        return(-1, -1) # We only get here if there's an error
+        
         
 if __name__ == '__main__':
     import machine
@@ -271,7 +273,7 @@ if __name__ == '__main__':
     gyr.config_gyro()
     gyr.enable()
     gyr.get_bias()
-    gyr.start_gyros()
+    #gyr.start_gyros()
     
     temp = BMP388(i2c, 0x76)
     temp.enable_temp_and_pressure()
@@ -279,5 +281,5 @@ if __name__ == '__main__':
     
     while True:
         print(temp.getPressure())
-        time.sleep_ms(50)
+        time.sleep_ms(1000)
         
