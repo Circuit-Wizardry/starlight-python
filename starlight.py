@@ -39,6 +39,12 @@ class ICM42605:
         self.gRes = 2000/32768
         self.gOdr = 1000
         self.aRes = 16/32768
+        self.ax_bias = 0
+        self.ay_bias = 0
+        self.az_bias = 0
+        self.gx_bias = 0
+        self.gy_bias = 0
+        self.gz_bias = 0
         
     def config_gyro(self, value=b'\x48'):
         if self.operating:
@@ -58,12 +64,6 @@ class ICM42605:
         time.sleep(5)
             
         precision = 100 # change this number to change precision of calibration. higher number will take longer
-        self.ax_bias = 0
-        self.ay_bias = 0
-        self.az_bias = 0
-        self.gx_bias = 0
-        self.gy_bias = 0
-        self.gz_bias = 0
         
         for i in range(precision):
             all_values = self.i2c.readfrom_mem(self.addr, TEMP_DATA1, 14)
